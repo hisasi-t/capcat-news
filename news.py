@@ -2,7 +2,7 @@ import feedparser
 import datetime
 import html as html_lib
 from feeds import FEEDS
-from keywords import CATEGORIES
+from keywords import CATEGORIES, EXCLUDE_KEYWORDS
 
 JST = datetime.timezone(datetime.timedelta(hours=9))
 WEEKDAY = ["月", "火", "水", "木", "金", "土", "日"]
@@ -27,13 +27,19 @@ def fetch_all():
 
 
 def categorize(articles):
+    # 除外キーワードにひっかかる記事を先に弾く
+    filtered = [
+        a for a in articles
+        if not any(kw in a["title"] + a["summary"] for kw in EXCLUDE_KEYWORDS)
+    ]
+
     buckets = {cat: [] for cat in CATEGORIES}
     used = set()
 
     for cat, keywords in CATEGORIES.items():
         if not keywords:
             continue
-        for a in articles:
+        for a in filtered:
             aid = id(a)
             if aid in used:
                 continue
@@ -44,7 +50,7 @@ def categorize(articles):
 
     # キャッチオール（最後のカテゴリ）
     catch = list(CATEGORIES.keys())[-1]
-    for a in articles:
+    for a in filtered:
         if id(a) not in used:
             buckets[catch].append(a)
             used.add(id(a))
