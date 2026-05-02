@@ -63,10 +63,17 @@ def render(buckets):
     dow = WEEKDAY[now.weekday()]
     date_str = now.strftime(f"%Y年%m月%d日（{dow}）")
 
+    active = [(cat, items) for cat, items in buckets.items() if items]
+
+    # 目次
+    toc_items = ""
+    for i, (cat, _) in enumerate(active):
+        label = html_lib.escape(cat)
+        toc_items += f'<a class="toc-link" href="#s{i}">{label}</a>'
+
+    # セクション
     sections = ""
-    for cat, items in buckets.items():
-        if not items:
-            continue
+    for i, (cat, items) in enumerate(active):
         cards = ""
         for a in items[:6]:
             title = html_lib.escape(a["title"])
@@ -74,12 +81,12 @@ def render(buckets):
             link = html_lib.escape(a["link"])
             cards += f"""
         <a class="card" href="{link}" target="_blank" rel="noopener">
-          <div class="card-source">{source}</div>
-          <div class="card-title">{title}</div>
+          <span class="card-source">{source}</span>
+          <span class="card-title">{title}</span>
         </a>"""
         sections += f"""
-    <section>
-      <h2>{cat}</h2>
+    <section id="s{i}">
+      <h2>{html_lib.escape(cat)}</h2>
       <div class="cards">{cards}
       </div>
     </section>"""
@@ -89,96 +96,104 @@ def render(buckets):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#c87941">
-<title>🐱☕ 朝刊 {date_str}</title>
+<meta name="theme-color" content="#111111">
+<title>朝刊 {date_str}</title>
 <style>
-  :root {{
-    --bg:      #fdf8f2;
-    --card:    #ffffff;
-    --accent:  #c87941;
-    --accent2: #e8a87c;
-    --text:    #3a2a1a;
-    --sub:     #9a8070;
-    --border:  #ead5bb;
-  }}
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
-    background: var(--bg);
-    color: var(--text);
+    background: #f4f4f4;
+    color: #111;
     font-family: -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
     padding-bottom: 3rem;
-    max-width: 640px;
-    margin: 0 auto;
   }}
   header {{
-    background: linear-gradient(135deg, #b06a30 0%, var(--accent2) 100%);
+    background: #111;
     color: #fff;
-    padding: 1.4rem 1rem 1rem;
-    text-align: center;
+    padding: 1.1rem 1rem 0.9rem;
   }}
   header h1 {{
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     font-weight: bold;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
   }}
   header .date {{
-    font-size: 0.82rem;
-    opacity: 0.88;
-    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-top: 0.2rem;
   }}
+  nav {{
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    padding: 0.6rem 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }}
+  .toc-link {{
+    font-size: 0.72rem;
+    color: #444;
+    text-decoration: none;
+    background: #f0f0f0;
+    border-radius: 4px;
+    padding: 0.2rem 0.5rem;
+    white-space: nowrap;
+  }}
+  .toc-link:active {{ background: #ddd; }}
   section {{
-    margin: 1.1rem 0.75rem 0;
+    margin: 1rem 0.75rem 0;
   }}
   h2 {{
-    font-size: 0.97rem;
+    font-size: 0.88rem;
     font-weight: bold;
-    color: var(--accent);
-    border-left: 4px solid var(--accent);
-    padding-left: 0.6rem;
-    margin-bottom: 0.65rem;
+    color: #111;
+    border-left: 3px solid #111;
+    padding-left: 0.55rem;
+    margin-bottom: 0.55rem;
   }}
   .cards {{
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: 1px;
+    background: #ddd;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
   }}
   .card {{
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 0.8rem 1rem;
+    background: #fff;
+    padding: 0.75rem 0.9rem;
     text-decoration: none;
     color: inherit;
-    display: block;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-    transition: background 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
   }}
-  .card:active {{ background: #fdefd8; }}
+  .card:active {{ background: #f0f0f0; }}
   .card-source {{
-    font-size: 0.68rem;
-    color: var(--sub);
-    margin-bottom: 0.25rem;
+    font-size: 0.65rem;
+    color: #888;
   }}
   .card-title {{
-    font-size: 0.93rem;
+    font-size: 0.9rem;
     line-height: 1.5;
+    color: #111;
   }}
   footer {{
     text-align: center;
-    font-size: 0.72rem;
-    color: var(--sub);
-    margin-top: 2.5rem;
-    padding: 0 1rem;
+    font-size: 0.68rem;
+    color: #aaa;
+    margin-top: 2rem;
   }}
 </style>
 </head>
 <body>
 <header>
-  <h1>🐱 おはよう朝刊 ☕</h1>
+  <h1>朝刊</h1>
   <div class="date">{date_str}</div>
 </header>
+<nav>{toc_items}</nav>
 {sections}
-<footer>自動生成 · {now.strftime("%H:%M")} JST</footer>
+<footer>{now.strftime("%H:%M")} JST · 自動生成</footer>
 </body>
 </html>"""
 
